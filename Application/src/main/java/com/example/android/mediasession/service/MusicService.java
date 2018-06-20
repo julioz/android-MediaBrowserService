@@ -40,6 +40,9 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private static final String TAG = MusicService.class.getSimpleName();
 
+    public static final String ACTION_KEY = "customaction.setqueue";
+    public static final String QUEUE_KEY = "keys.queue";
+
     private MediaSessionCompat mSession;
     private PlayerAdapter mPlayback;
     private MediaNotificationManager mMediaNotificationManager;
@@ -56,8 +59,8 @@ public class MusicService extends MediaBrowserServiceCompat {
         mSession.setCallback(mCallback);
         mSession.setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+                        MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
+                        MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         setSessionToken(mSession.getSessionToken());
 
         mMediaNotificationManager = new MediaNotificationManager(this);
@@ -175,9 +178,23 @@ public class MusicService extends MediaBrowserServiceCompat {
             mPlayback.seekTo(pos);
         }
 
+        @Override
+        public void onCustomAction(String action, Bundle extras) {
+            super.onCustomAction(action, extras);
+            if (action.equals(ACTION_KEY)) {
+                // extras.setClassLoader(MediaSessionCompat.QueueItem.class.getClassLoader()); <-- this is the workaround
+                ArrayList<MediaSessionCompat.QueueItem> queue = extras.getParcelableArrayList(QUEUE_KEY);
+                doSomethingWithTheQueue(queue);
+            }
+        }
+
         private boolean isReadyToPlay() {
             return (!mPlaylist.isEmpty());
         }
+    }
+
+    private void doSomethingWithTheQueue(@NonNull ArrayList<MediaSessionCompat.QueueItem> queue) {
+        Log.d(TAG, "Queue size is " + queue.size());
     }
 
     // MediaPlayerAdapter Callback: MediaPlayerAdapter state -> MusicService.

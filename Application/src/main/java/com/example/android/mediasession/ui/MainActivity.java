@@ -20,13 +20,13 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -35,7 +35,9 @@ import com.example.android.mediasession.client.MediaBrowserHelper;
 import com.example.android.mediasession.service.MusicService;
 import com.example.android.mediasession.service.contentcatalogs.MusicLibrary;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -64,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.button_previous).setOnClickListener(clickListener);
         findViewById(R.id.button_play).setOnClickListener(clickListener);
         findViewById(R.id.button_next).setOnClickListener(clickListener);
+        findViewById(R.id.send_to_queue).setOnClickListener(clickListener);
 
         mMediaBrowserHelper = new MediaBrowserConnection(this);
         mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
@@ -105,7 +108,29 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.button_next:
                     mMediaBrowserHelper.getTransportControls().skipToNext();
                     break;
+                case R.id.send_to_queue:
+                    sendToQueueCustomAction(mMediaBrowserHelper.getTransportControls());
+                    break;
             }
+        }
+    }
+
+    private void sendToQueueCustomAction(MediaControllerCompat.TransportControls transportControls) {
+        ArrayList<MediaSessionCompat.QueueItem> queueItems = new ArrayList();
+        addQueueItems(queueItems, 5);
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList(MusicService.QUEUE_KEY, queueItems);
+        transportControls.sendCustomAction(MusicService.ACTION_KEY, bundle);
+    }
+
+    private void addQueueItems(ArrayList<MediaSessionCompat.QueueItem> queueItems, int numberOfItemsToAdd) {
+        for (int i = 0; i < numberOfItemsToAdd; i++) {
+            String id = UUID.randomUUID().toString();
+            MediaDescriptionCompat mediaDescription = new MediaDescriptionCompat.Builder()
+                    .setMediaId(id)
+                    .build();
+            MediaSessionCompat.QueueItem queueItem = new MediaSessionCompat.QueueItem(mediaDescription, id.hashCode());
+            queueItems.add(queueItem);
         }
     }
 
